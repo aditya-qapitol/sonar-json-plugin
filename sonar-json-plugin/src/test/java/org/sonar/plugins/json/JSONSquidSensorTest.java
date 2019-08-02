@@ -24,9 +24,11 @@ import org.junit.Test;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.fs.internal.FileMetadata;
+import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.ActiveRules;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
+import org.sonar.api.batch.rule.internal.NewActiveRule;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.Issue;
@@ -38,6 +40,8 @@ import org.sonar.json.checks.generic.MissingNewLineAtEndOfFileCheck;
 import org.sonar.json.checks.generic.TabCharacterCheck;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Collection;
 
 import static org.fest.assertions.Assertions.assertThat;
@@ -46,7 +50,7 @@ import static org.mockito.Mockito.mock;
 public class JSONSquidSensorTest {
 
   private final File baseDir = new File("src/test/resources");
-  private final SensorContextTester context = SensorContextTester.create(baseDir);
+  private final SensorContextTester context = SensorContextTester.create(baseDir.getAbsoluteFile());
   private CheckFactory checkFactory = new CheckFactory(mock(ActiveRules.class));
 
   @Test
@@ -93,11 +97,9 @@ public class JSONSquidSensorTest {
     inputFile(fileName);
 
     ActiveRules activeRules = (new ActiveRulesBuilder())
-      .create(RuleKey.of(CheckList.REPOSITORY_KEY, TabCharacterCheck.class.getAnnotation(Rule.class).key()))
-      .activate()
-      .create(RuleKey.of(CheckList.REPOSITORY_KEY, MissingNewLineAtEndOfFileCheck.class.getAnnotation(Rule.class).key()))
-      .activate()
-      .build();
+        .addRule(new NewActiveRule.Builder().setRuleKey(RuleKey.of(CheckList.REPOSITORY_KEY, TabCharacterCheck.class.getAnnotation(Rule.class).key())).build())
+        .addRule(new NewActiveRule.Builder().setRuleKey(RuleKey.of(CheckList.REPOSITORY_KEY, MissingNewLineAtEndOfFileCheck.class.getAnnotation(Rule.class).key())).build())
+        .build();
     checkFactory = new CheckFactory(activeRules);
 
     createJSONSquidSensor().execute(context);
@@ -110,9 +112,8 @@ public class JSONSquidSensorTest {
     inputFile("parsingError.json");
 
     ActiveRules activeRules = (new ActiveRulesBuilder())
-      .create(RuleKey.of(CheckList.REPOSITORY_KEY, "S2260"))
-      .activate()
-      .build();
+        .addRule(new NewActiveRule.Builder().setRuleKey(RuleKey.of(CheckList.REPOSITORY_KEY, "S2260")).build())
+        .build();
 
     checkFactory = new CheckFactory(activeRules);
 
@@ -142,15 +143,20 @@ public class JSONSquidSensorTest {
   }
 
   private void inputFile(String relativePath) {
-    DefaultInputFile inputFile = new DefaultInputFile("moduleKey", relativePath)
-      .setModuleBaseDir(baseDir.toPath())
-      .setType(InputFile.Type.MAIN)
-      .setLanguage(JSONLanguage.KEY);
+    DefaultInputFile inputFile = TestInputFileBuilder.create("moduleKey", relativePath)
+        .setModuleBaseDir(baseDir.toPath())
+        .setType(InputFile.Type.MAIN)
+        .setLanguage(JSONLanguage.KEY)
+        .build();
 
     context.fileSystem().setEncoding(Charsets.UTF_8);
     context.fileSystem().add(inputFile);
 
-    inputFile.initMetadata(new FileMetadata().readMetadata(inputFile.file(), Charsets.UTF_8));
+    try {
+      inputFile.setMetadata(new FileMetadata().readMetadata(new FileInputStream(new File(inputFile.uri())), Charsets.UTF_8, relativePath));
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
   }
 
 }

@@ -24,6 +24,7 @@ import com.google.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
 
 import org.junit.Before;
@@ -33,6 +34,8 @@ import org.junit.rules.TemporaryFolder;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
+import org.sonar.api.batch.fs.internal.FileMetadata;
+import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.sensor.highlighting.TypeOfText;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.json.parser.JSONParserBuilder;
@@ -61,9 +64,9 @@ public class SyntaxHighlighterVisitorTest {
     DefaultFileSystem fileSystem = new DefaultFileSystem(tempFolder.getRoot());
     fileSystem.setEncoding(Charsets.UTF_8);
     file = tempFolder.newFile();
-    inputFile = new DefaultInputFile("moduleKey", file.getName())
+    inputFile = TestInputFileBuilder.create("moduleKey", file.getName())
       .setLanguage("json")
-      .setType(InputFile.Type.MAIN);
+      .setType(InputFile.Type.MAIN).build();
     fileSystem.add(inputFile);
 
     sensorContext = SensorContextTester.create(tempFolder.getRoot());
@@ -123,7 +126,7 @@ public class SyntaxHighlighterVisitorTest {
   }
 
   private void highlight(String string) throws Exception {
-    inputFile.initMetadata(string);
+    inputFile.setMetadata(new FileMetadata().readMetadata(new StringReader(string)));
     Tree tree = JSONParserBuilder.createParser(Charsets.UTF_8).parse(string);
     when(visitorContext.getTopTree()).thenReturn((JsonTree) tree);
 

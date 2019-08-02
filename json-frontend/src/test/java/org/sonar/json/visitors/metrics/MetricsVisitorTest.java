@@ -23,6 +23,7 @@ import com.google.common.base.Charsets;
 import org.junit.Test;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
+import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.json.parser.JSONParserBuilder;
@@ -40,12 +41,12 @@ public class MetricsVisitorTest {
   @Test
   public void test() {
     File moduleBaseDir = new File("src/test/resources/");
-    SensorContextTester context = SensorContextTester.create(moduleBaseDir);
+    SensorContextTester context = SensorContextTester.create(moduleBaseDir.getAbsoluteFile());
 
-    DefaultInputFile inputFile = new DefaultInputFile("moduleKey", "metrics.json")
+    DefaultInputFile inputFile = TestInputFileBuilder.create("moduleKey", "metrics.json")
       .setModuleBaseDir(moduleBaseDir.toPath())
       .setLanguage("json")
-      .setType(InputFile.Type.MAIN);
+      .setType(InputFile.Type.MAIN).build();
 
     context.fileSystem().add(inputFile);
 
