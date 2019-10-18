@@ -61,7 +61,7 @@
     <license.title>SonarQube JSON Analyzer</license.title>
     <license.owner>David RACODON</license.owner>
     <license.mailto>david.racodon@gmail.com</license.mailto>
-    <sonar.version>7.6</sonar.version>
+    <sonar.version>7.9.1</sonar.version>
     <sslr.version>1.23</sslr.version>
     <sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
   </properties>
