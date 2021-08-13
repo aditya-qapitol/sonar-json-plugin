@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-mvn -B clean install -Pits -Dsonar.runtimeVersion=$SQ_VERSION
+mvn -B clean install -Pits -Dmaven.test.skip -Dlicense.skip -Dsonar.runtimeVersion=$SQ_VERSION
 
 if [ "$SQ_VERSION" == "LTS" ]; then
 
